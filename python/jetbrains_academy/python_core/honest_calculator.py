@@ -1,6 +1,7 @@
 def algorithm(msg_0, msg_1, msg_2):
     # Run the algorithm according to the flowchart in project
-    while True:
+    is_valid_inputs = False
+    while not is_valid_inputs:
         x, operand, y = get_input(msg_0)
 
         if not is_numbers(x, y):
@@ -9,7 +10,7 @@ def algorithm(msg_0, msg_1, msg_2):
             if not is_operand(operand):
                 print(msg_2)
             else:
-                break
+                is_valid_inputs = True
 
 
 def get_input(msg_0):
