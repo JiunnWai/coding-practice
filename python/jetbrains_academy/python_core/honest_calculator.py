@@ -1,4 +1,4 @@
-def algorithm(msg_0, msg_1, msg_2, msg_3):
+def calculator(msg_0, msg_1, msg_2, msg_3):
     # Run the algorithm according to the flowchart in project
     is_valid_inputs = False
 
@@ -75,4 +75,4 @@ if __name__ == '__main__':
              "all classes, haven't you?")
     msg_3 = "Yeah... division by zero. Smart move..."
 
-    algorithm(msg_0, msg_1, msg_2, msg_3)
+    calculator(msg_0, msg_1, msg_2, msg_3)
