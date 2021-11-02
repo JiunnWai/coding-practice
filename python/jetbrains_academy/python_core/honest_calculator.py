@@ -116,8 +116,24 @@ def store_result(messages, memory, result):
         should_store_result = input(f"{messages['store_result']}\n")
 
         if should_store_result == "y":
-            memory = result
-            return memory
+            if is_one_digit(result):
+                msg_index = 10
+
+                while True:
+                    print(list(messages.values())[msg_index])
+                    answer = input()
+                    if answer == "y":
+                        if msg_index < 12:
+                            msg_index += 1
+                        else:
+                            return result
+                    else:
+                        if answer == "n":
+                            return memory
+
+            else:
+                return result
+
         elif should_store_result == "n":
             return memory
 
@@ -146,6 +162,11 @@ if __name__ == '__main__':
         "very_lazy": " ... very lazy",
         "very_very_lazy": " ... very, very lazy",
         "you_are": "You are",
+        "one_digit": "Are you sure? It is only one digit! (y / n)",
+        "double_check": ("Don't be silly! It's just one number! Add to the "
+                         "memory? (y / n)"),
+        "last_chance": ("Last chance! Do you really want to embarrass "
+                        "yourself? (y / n)")
     }
 
     honest_calculator(messages)
