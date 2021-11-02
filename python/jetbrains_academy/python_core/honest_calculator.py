@@ -69,7 +69,7 @@ def calculate(x, y, operand, memory, messages):
         result = x - y
     elif operand == "*":
         result = x * y
-    elif result == "/" and y != 0:
+    elif operand == "/" and y != 0:
         result = x / y
     else:
         is_valid_inputs = False
@@ -85,18 +85,14 @@ def calculate(x, y, operand, memory, messages):
 
 def store_result(messages, memory, result):
     # Check if user want to store the result for further use
-    is_valid_store_input = False
-
-    while not is_valid_store_input:
+    while True:
         should_store_result = input(f"{messages['store_result']}\n")
 
         if should_store_result == "y":
-            is_valid_store_input = True
             memory = result
+            return memory
         elif should_store_result == "n":
-            is_valid_store_input = True
-
-    return memory
+            return memory
 
 
 def continue_calculations(messages):
