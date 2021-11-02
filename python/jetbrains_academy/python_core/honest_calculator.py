@@ -1,25 +1,36 @@
-def calculator(msg_0, msg_1, msg_2, msg_3):
-    # Run the algorithm according to the flowchart in project
+def honest_calculator(messages):
+    # Run the calculator algorithm according to the flowchart in project
+    memory = 0.0
     is_valid_inputs = False
+    should_continue = True
 
-    while not is_valid_inputs:
-        x, operand, y = get_input(msg_0)
+    while not is_valid_inputs or should_continue:
+        x, operand, y = get_input(messages["input"])
+
+        if x == "M":
+            x = memory
+        if y == "M":
+            y = memory
 
         if not is_numbers(x, y):
-            print(msg_1)
+            print(messages["wrong_number"])
         else:
             if not is_operand(operand):
-                print(msg_2)
+                print(messages["wrong_operand"])
             else:
                 x = float(x)
                 y = float(y)
-                is_valid_inputs = calculate(x, y, operand, msg_3)
+
+                is_valid_inputs, should_continue, memory = calculate(x,
+                                                                     y,
+                                                                     operand,
+                                                                     memory,
+                                                                     messages)
 
 
-def get_input(msg_0):
-    # Ask user for input
-    print(msg_0)
-    calc = input()
+def get_input(message):
+    # Ask user for an equation
+    calc = input(f"{message}\n")
 
     calc = calc.split()
     x = calc[0]
@@ -37,6 +48,7 @@ def is_numbers(x, y):
         is_number = True
     except ValueError:
         is_number = False
+
     return is_number
 
 
@@ -45,10 +57,11 @@ def is_operand(operand):
     return operand in ["+", "-", "*", "/"]
 
 
-def calculate(x, y, operand, msg_3):
+def calculate(x, y, operand, memory, messages):
     # Attempt to calculate and print the result
     result = None
     is_valid_inputs = True
+    should_continue = False
 
     if operand == "+":
         result = x + y
@@ -60,19 +73,52 @@ def calculate(x, y, operand, msg_3):
         result = x / y
     else:
         is_valid_inputs = False
-        print(msg_3)
+        print(messages["division_by_zero"])
 
     if is_valid_inputs:
         print(result)
+        memory = store_result(messages, memory, result)
+        should_continue = continue_calculations(messages)
 
-    return is_valid_inputs
+    return is_valid_inputs, should_continue, memory
+
+
+def store_result(messages, memory, result):
+    # Check if user want to store the result for further use
+    is_valid_store_input = False
+
+    while not is_valid_store_input:
+        should_store_result = input(f"{messages['store_result']}\n")
+
+        if should_store_result == "y":
+            is_valid_store_input = True
+            memory = result
+        elif should_store_result == "n":
+            is_valid_store_input = True
+
+    return memory
+
+
+def continue_calculations(messages):
+    # Check if user want to continue and do more calculations
+    while True:
+        should_continue = input(f"{messages['continue']}\n")
+
+        if should_continue == "y":
+            return True
+        elif should_continue == "n":
+            return False
 
 
 if __name__ == '__main__':
-    msg_0 = "Enter an equation"
-    msg_1 = "Do you even know what numbers are? Stay focused!"
-    msg_2 = ("Yes ... an interesting math operation. You've slept through "
-             "all classes, haven't you?")
-    msg_3 = "Yeah... division by zero. Smart move..."
+    messages = {
+        "input": "Enter an equation",
+        "wrong_number": "Do you even know what numbers are? Stay focused!",
+        "wrong_operand": ("Yes ... an interesting math operation. You've "
+                          "slept through all classes, haven't you?"),
+        "division_by_zero": "Yeah... division by zero. Smart move...",
+        "store_result": "Do you want to store the result? (y / n):",
+        "continue": "Do you want to continue calculations? (y / n):",
+    }
 
-    calculator(msg_0, msg_1, msg_2, msg_3)
+    honest_calculator(messages)
