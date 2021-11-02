@@ -21,6 +21,8 @@ def honest_calculator(messages):
                 x = float(x)
                 y = float(y)
 
+                check(x, y, operand, messages)
+
                 is_valid_inputs, should_continue, memory = calculate(x,
                                                                      y,
                                                                      operand,
@@ -55,6 +57,31 @@ def is_numbers(x, y):
 def is_operand(operand):
     # Check if the input is a valid operand
     return operand in ["+", "-", "*", "/"]
+
+
+def check(x, y, operand, messages):
+    # Check user input and output some messages
+    msg = ""
+
+    if is_one_digit(x) and is_one_digit(y):
+        msg += messages["lazy"]
+    if (x == 1 or y == 1) and operand == "*":
+        msg += messages["very_lazy"]
+    if (x == 0 or y == 0) and (operand in ("*", "+", "-")):
+        msg += messages["very_very_lazy"]
+    if msg != "":
+        msg = messages["you_are"] + msg
+        print(msg)
+
+
+def is_one_digit(v):
+    # Check if the given value is an integer between -10 and 10
+    is_integer = int(v) == float(v)
+
+    if -10 < v < 10 and is_integer:
+        return True
+    else:
+        return False
 
 
 def calculate(x, y, operand, memory, messages):
@@ -115,6 +142,10 @@ if __name__ == '__main__':
         "division_by_zero": "Yeah... division by zero. Smart move...",
         "store_result": "Do you want to store the result? (y / n):",
         "continue": "Do you want to continue calculations? (y / n):",
+        "lazy": " ... lazy",
+        "very_lazy": " ... very lazy",
+        "very_very_lazy": " ... very, very lazy",
+        "you_are": "You are",
     }
 
     honest_calculator(messages)
