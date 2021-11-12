@@ -6,11 +6,16 @@ COMPUTER = "computer"
 ROCK = "rock"
 PAPER = "paper"
 SCISSORS = "scissors"
+EXIT = "!exit"
 
 
 def get_user_choice():
-    # Get user input for their choice of rock, paper, or scissors
-    return input()
+    # Get user input for their choice of action
+    user_input = input()
+    while user_input not in [ROCK, PAPER, SCISSORS, EXIT]:
+        print("Invalid input")
+        user_input = input()
+    return user_input
 
 
 def get_computer_choice():
@@ -58,7 +63,13 @@ def print_result(winner, user_choice, computer_choice):
 
 
 if __name__ == '__main__':
-    user_choice = get_user_choice()
-    computer_choice = get_computer_choice()
-    winner = find_winner(user_choice, computer_choice)
-    print_result(winner, user_choice, computer_choice)
+    while True:
+        user_choice = get_user_choice()
+
+        if user_choice != EXIT:
+            computer_choice = get_computer_choice()
+            winner = find_winner(user_choice, computer_choice)
+            print_result(winner, user_choice, computer_choice)
+        else:
+            print("Bye!")
+            break
