@@ -1,12 +1,11 @@
+import math
 import random
 
 
 RATINGS_FILE = "rating.txt"
 USER = "user"
 COMPUTER = "computer"
-ROCK = "rock"
-PAPER = "paper"
-SCISSORS = "scissors"
+DEFAULT_OPTIONS = ("rock", "paper", "scissors")
 RATING = "!rating"
 EXIT = "!exit"
 
@@ -22,15 +21,33 @@ def get_user_score(username, ratings_file):
     # Get the user's score from file containing previous ratings
     user_score = 0
 
-    ratings = open(ratings_file, "r")
-    for line in ratings:
-        name, score = line.split()
-        if name == username:
-            user_score = int(score)
-            break
-    ratings.close()
+    try:
+        ratings = open(ratings_file, "r")
+    except FileNotFoundError:
+        print("The ratings file does not exist")
+    else:
+        for line in ratings:
+            name, score = line.split()
+            if name == username:
+                user_score = int(score)
+                break
+        ratings.close()
 
     return user_score
+
+
+def get_game_options():
+    # Read input to get a list of options used for the game
+    options = input()
+
+    if not options:
+        # Use default options
+        options = DEFAULT_OPTIONS
+    else:
+        options = tuple(options.split(","))
+
+    print("Okay, let's start")
+    return options
 
 
 def print_score(score):
@@ -38,45 +55,40 @@ def print_score(score):
     print(f"Your rating: {score}")
 
 
-def get_user_choice():
+def get_user_choice(options):
     # Get user input for their choice of action
     user_input = input()
-    while user_input not in [ROCK, PAPER, SCISSORS, RATING, EXIT]:
+    while user_input not in [*options, RATING, EXIT]:
         print("Invalid input")
         user_input = input()
     return user_input
 
 
-def get_computer_choice():
+def get_computer_choice(options):
     # Randomly choose for the computer
-    return random.choice([ROCK, PAPER, SCISSORS])
+    return random.choice(options)
 
 
-def find_winner(user_choice, computer_choice):
+def find_winner(options, user_choice, computer_choice):
     # Evaluate the user and computer's choices and return the winner
     winner = None
 
-    if user_choice == ROCK:
-        if computer_choice == ROCK:
-            winner = None
-        elif computer_choice == PAPER:
-            winner = COMPUTER
-        elif computer_choice == SCISSORS:
+    if user_choice != computer_choice:
+        # Split the options into 2 halves around the index of user's choice
+        index = options.index(user_choice)
+        first_half = options[:index]
+        second_half = () if user_choice == options[-1] else options[index+1:]
+
+        # User wins against options in the second half of the rearranged list
+        second_half_index = math.floor(len(options) / 2)
+        rearranged_options = second_half + first_half
+        lose_against = rearranged_options[:second_half_index]
+        win_against = rearranged_options[second_half_index:]
+
+        if computer_choice in win_against:
             winner = USER
-    elif user_choice == PAPER:
-        if computer_choice == ROCK:
-            winner = USER
-        elif computer_choice == PAPER:
-            winner = None
-        elif computer_choice == SCISSORS:
+        elif computer_choice in lose_against:
             winner = COMPUTER
-    elif user_choice == SCISSORS:
-        if computer_choice == ROCK:
-            winner = COMPUTER
-        elif computer_choice == PAPER:
-            winner = USER
-        elif computer_choice == SCISSORS:
-            winner = None
 
     return winner
 
@@ -97,19 +109,20 @@ def calculate_score(score, winner, user_choice, computer_choice):
 if __name__ == '__main__':
     username = get_username()
     score = get_user_score(username, RATINGS_FILE)
+    options = get_game_options()
 
     while True:
-        user_choice = get_user_choice()
+        user_choice = get_user_choice(options)
 
         if user_choice == RATING:
             print_score(score)
-        elif user_choice != EXIT:
-            computer_choice = get_computer_choice()
-            winner = find_winner(user_choice, computer_choice)
+        elif user_choice == EXIT:
+            print("Bye!")
+            break
+        elif user_choice in options:
+            computer_choice = get_computer_choice(options)
+            winner = find_winner(options, user_choice, computer_choice)
             score = calculate_score(score,
                                     winner,
                                     user_choice,
                                     computer_choice)
-        else:
-            print("Bye!")
-            break
