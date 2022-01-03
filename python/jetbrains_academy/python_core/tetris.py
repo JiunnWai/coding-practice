@@ -1,84 +1,142 @@
 import numpy as np
 
-
-GRID_SIZE = 4
-BLANK_CHAR = '- '
-PIECE_CHAR = '0 '
-
-O = [[5, 6, 9, 10]]
-I = [[1, 5, 9, 13], [4, 5, 6, 7]]
-S = [[6, 5, 9, 8], [5, 9, 10, 14]]
-Z = [[4, 5, 9, 10], [2, 5, 6, 9]]
-L = [[1, 5, 9, 10], [2, 4, 5, 6], [1, 2, 6, 10], [4, 5, 6, 8]]
-J = [[2, 6, 9, 10], [4, 5, 6, 10], [1, 2, 5, 9], [0, 4, 5, 6]]
-T = [[1, 4, 5, 6], [1, 4, 5, 9], [4, 5, 6, 9], [1, 5, 6, 9]]
+from typing import List
 
 
-def create_empty_grid() -> np.ndarray:
-    # Create an empty grid as a 2D array of size x size
-    grid = []
-    for i in range(GRID_SIZE):
-        row = []
-        for j in range(GRID_SIZE):
-            row.append(BLANK_CHAR)
-        grid.append(row)
-    return np.array(grid)
+class Board:
+    DEFAULT_BOARD_WIDTH = 10
+    DEFAULT_BOARD_HEIGHT = 20
+    BLANK_CHAR = '- '
+
+    def __init__(self,
+                 width: int = DEFAULT_BOARD_WIDTH,
+                 height: int = DEFAULT_BOARD_HEIGHT):
+        self.width = width
+        self.height = height
+        self.board = self._create_board()
+
+    def _create_board(self) -> np.ndarray:
+        # Create the board matrix with size width x height, filled with blanks
+        return np.full((self.height, self.width), Board.BLANK_CHAR)
+
+    def add_piece(self, piece: 'Piece'):
+        # Add the given piece onto the board
+        for index in piece.position:
+            row = index // self.width
+            col = index % self.width
+            self.board[row][col] = Piece.PIECE_CHAR
+
+    def reset(self):
+        # Reset to an empty board
+        self.board = self._create_board()
+
+    def __str__(self) -> str:
+        # Return the printable representation of the board
+        string = ''
+        for row in self.board:
+            line = ''.join(row).strip()
+            string += line
+            string += '\n'
+        return string
 
 
-def print_grid(grid: np.ndarray):
-    # Print the given 2D array grid
-    string = ''
-    for i in grid:
-        for j in i:
-            string += f'{j}'
-        string += '\n'
-    print(string)
+class Piece:
+    PIECE_CHAR = '0 '
+    O = ((4, 14, 15, 5),)
+    I = ((4, 14, 24, 34), (3, 4, 5, 6))
+    S = ((5, 4, 14, 13), (4, 14, 15, 25))
+    Z = ((4, 5, 15, 16), (5, 15, 14, 24))
+    L = ((4, 14, 24, 25), (5, 15, 14, 13), (4, 5, 15, 25), (6, 5, 4, 14))
+    J = ((5, 15, 25, 24), (15, 5, 4, 3), (5, 4, 14, 24), (4, 14, 15, 16))
+    T = ((4, 14, 24, 15), (4, 13, 14, 15), (5, 15, 25, 14), (4, 5, 6, 15))
 
+    def __init__(self, piece: str, board_width: int):
+        self.piece = piece
+        self.board_width = board_width
+        self.position = self._get_initial_position()
+        self.orientation = self.position
+        self.row_offset = 0
+        self.col_offset = 0
 
-def print_piece(piece: list):
-    # Given a list containing the state of a piece, print the piece
-    grid = create_empty_grid()
-    for i in piece:
-        grid[i // GRID_SIZE][i % GRID_SIZE] = PIECE_CHAR
-    print_grid(grid)
+    def _get_initial_position(self) -> List[int]:
+        # Return the initial position of the piece
+        # ie. Return the value of Piece.I[0]
+        current_piece = eval(f'Piece.{self.piece}')
+        return current_piece[0]
+
+    def rotate(self):
+        # Find which way the piece is oriented and change to the next one
+        self.row_offset += 1  # Move the piece down for each command
+        possible_orientations = eval(f'Piece.{self.piece}')
+        for k, v in enumerate(possible_orientations):
+            if self.orientation == v:
+                next_orientation_idx = (k+1) % len(possible_orientations)
+                self.orientation = possible_orientations[next_orientation_idx]
+                break
+        self._update_position()
+
+    def move_left(self):
+        # Move the piece 1 position to the left, and also 1 down
+        self.col_offset -= 1
+        self.row_offset += 1
+        self._update_position()
+
+    def move_right(self):
+        # Move the piece 1 position to the right, and also 1 down
+        self.col_offset += 1
+        self.row_offset += 1
+        self._update_position()
+
+    def move_down(self):
+        # Move the piece 1 position down
+        self.row_offset += 1
+        self._update_position()
+
+    def _update_position(self):
+        # Recalculate the position of the piece based on orientation and offset
+        new_position = list(self.orientation)
+        for k, v in enumerate(new_position):
+            if self.col_offset >= 0:
+                v += self.col_offset
+            else:
+                col_offset = abs(self.col_offset) % self.board_width * -1
+                v += col_offset
+                if v < 0:
+                    v += self.board_width
+            v += self.row_offset * self.board_width
+            new_position[k] = v
+        self.position = new_position
 
 
 if __name__ == '__main__':
-    # Ask for the piece to show, ie. T
-    piece = input()
-    print()
+    # Ask for the piece to show
+    piece_letter = input()
 
-    # Print an empty grid
-    empty_grid = create_empty_grid()
-    print_grid(empty_grid)
+    # Get board size
+    width, height = (int(num) for num in input().split())
+    board = Board(width=width, height=height)
+    piece = Piece(piece_letter, board.width)
 
-    # Print and rotate the unique pieces
-    if piece == 'O':
-        for i in range(5):
-            print_piece(O[0])
-    elif piece == 'I':
-        for state in I:
-            print_piece(state)
-        print_piece(I[0])
-    elif piece == 'S':
-        for state in S:
-            print_piece(state)
-        print_piece(S[0])
-    elif piece == 'Z':
-        for i in range(5):
-            print_piece(Z[i%2])
-        # for state in Z:
-        #     print_piece(state)
-        # print_piece(Z[0])
-    elif piece == 'L':
-        for state in L:
-            print_piece(state)
-        print_piece(L[0])
-    elif piece == 'J':
-        for state in J:
-            print_piece(state)
-        print_piece(J[0])
-    elif piece == 'T':
-        for state in T:
-            print_piece(state)
-        print_piece(T[0])
+    # Print the board, then the board with the piece
+    print(board)
+    board.add_piece(piece)
+    print(board)
+
+    # Start loop to get user commands
+    while True:
+        command = input()
+
+        if command == 'exit':
+            break
+        elif command == 'rotate':
+            piece.rotate()
+        elif command == 'left':
+            piece.move_left()
+        elif command == 'right':
+            piece.move_right()
+        elif command == 'down':
+            piece.move_down()
+
+        board.reset()
+        board.add_piece(piece)
+        print(board)
