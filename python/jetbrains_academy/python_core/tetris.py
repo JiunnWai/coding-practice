@@ -140,17 +140,10 @@ class Piece:
 
 
 if __name__ == '__main__':
-    # Ask for the piece to show
-    piece_letter = input()
-
-    # Get board size
+    # Create the board based on the given dimensions
     width, height = (int(num) for num in input().split())
     board = Board(width=width, height=height)
-    piece = Piece(piece_letter, board.width, board.height)
-
-    # Print the board, then the board with the piece
-    print(board)
-    board.add_piece(piece)
+    piece = None
     print(board)
 
     # Start loop to get user commands
@@ -159,6 +152,9 @@ if __name__ == '__main__':
 
         if command == 'exit':
             break
+        elif command == 'piece':
+            piece = Piece(input(), board.width, board.height)
+            board.add_piece(piece)
         elif command == 'rotate':
             piece.rotate()
         elif command == 'left':
@@ -171,6 +167,7 @@ if __name__ == '__main__':
         # Make the piece a part of the board if it reaches the floor
         if piece.is_static:
             board.add_static_piece(piece)
+            piece = None
 
         # Redraw the board and piece
         board.redraw()
