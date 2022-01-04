@@ -40,6 +40,20 @@ class Board:
             col = index % self.width
             self.board[row][col] = Piece.PIECE_CHAR
 
+    def is_touching_other_piece(self, piece: 'Piece') -> bool:
+        # Check if the piece is touching the static pieces on the board
+        for index in piece.position:
+            row = index // self.width
+            col = index % self.width
+            below_tile = self.board[row+1][col]
+            below_tile_index = (row + 1) * self.width + col
+
+            if row + 1 == self.height:
+                return False  # Pass if the piece is touching the floor
+            if (below_tile == Piece.PIECE_CHAR
+                    and below_tile_index not in piece.position):
+                return True
+
     def __str__(self) -> str:
         # Return the printable representation of the board
         string = ''
@@ -133,10 +147,10 @@ class Piece:
             new_position[k] = v
         self.position = new_position
 
-        # Mark the piece as static if it reaches the floor of the board
+    def is_touching_floor(self) -> bool:
+        # Check if the piece is touching the floor of the board
         bottommost_row = max([p // self.board_width for p in self.position])
-        if bottommost_row + 1 == self.board_height:
-            self.is_static = True
+        return bottommost_row + 1 == self.board_height
 
 
 if __name__ == '__main__':
@@ -155,21 +169,26 @@ if __name__ == '__main__':
         elif command == 'piece':
             piece = Piece(input(), board.width, board.height)
             board.add_piece(piece)
-        elif command == 'rotate':
-            piece.rotate()
-        elif command == 'left':
-            piece.move_left()
-        elif command == 'right':
-            piece.move_right()
-        elif command == 'down':
-            piece.move_down()
+        elif piece:
+            if command == 'rotate':
+                piece.rotate()
+            elif command == 'left':
+                piece.move_left()
+            elif command == 'right':
+                piece.move_right()
+            elif command == 'down':
+                piece.move_down()
 
-        # Make the piece a part of the board if it reaches the floor
-        if piece.is_static:
-            board.add_static_piece(piece)
-            piece = None
+        # Make the piece part of the board if it touches floor or another piece
+        if piece:
+            if (piece.is_touching_floor()
+                    or board.is_touching_other_piece(piece)):
+                piece.is_static = True
+                board.add_static_piece(piece)
+                piece = None
 
         # Redraw the board and piece
         board.redraw()
-        board.add_piece(piece)
+        if piece:
+            board.add_piece(piece)
         print(board)
