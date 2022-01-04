@@ -14,6 +14,7 @@ class Board:
         self.width = width
         self.height = height
         self.board = self._create_board()
+        self.static_tiles = set()
 
     def _create_board(self) -> np.ndarray:
         # Create the board matrix with size width x height, filled with blanks
@@ -26,9 +27,18 @@ class Board:
             col = index % self.width
             self.board[row][col] = Piece.PIECE_CHAR
 
-    def reset(self):
-        # Reset to an empty board
+    def add_static_piece(self, piece: 'Piece'):
+        # Add the given piece as a static part of the board
+        for index in piece.position:
+            self.static_tiles.add(index)
+
+    def redraw(self):
+        # Redraw an empty board plus the static pieces
         self.board = self._create_board()
+        for index in self.static_tiles:
+            row = index // self.width
+            col = index % self.width
+            self.board[row][col] = Piece.PIECE_CHAR
 
     def __str__(self) -> str:
         # Return the printable representation of the board
@@ -58,6 +68,7 @@ class Piece:
         self.orientation = self.position
         self.row_offset = 0
         self.col_offset = 0
+        self.is_static = False
 
     def _get_initial_position(self) -> List[int]:
         # Return the initial position of the piece
@@ -67,48 +78,45 @@ class Piece:
 
     def rotate(self):
         # Find which way the piece is oriented and change to the next one
-        self.row_offset += 1  # Move the piece down for each command
-        possible_orientations = eval(f'Piece.{self.piece}')
-        for k, v in enumerate(possible_orientations):
-            if self.orientation == v:
-                next_orientation_idx = (k+1) % len(possible_orientations)
-                self.orientation = possible_orientations[next_orientation_idx]
-                break
-        self._update_position()
+        if not self.is_static:
+            self.row_offset += 1  # Move the piece down for each command
+            possible_orientations = eval(f'Piece.{self.piece}')
+            for k, v in enumerate(possible_orientations):
+                if self.orientation == v:
+                    next_orientation = (k+1) % len(possible_orientations)
+                    self.orientation = possible_orientations[next_orientation]
+                    break
+            self._update_position()
 
     def move_left(self):
         # Move the piece 1 position to the left and 1 down if possible
-        leftmost_col = self.board_width
-        for position in self.position:
-            leftmost_col = min(leftmost_col, position % self.board_width)
+        if not self.is_static:
+            leftmost_col = min([p % self.board_width for p in self.position])
+            if leftmost_col > 0:
+                self.col_offset -= 1
 
-        if leftmost_col > 0:
-            self.col_offset -= 1
-
-        self.move_down()
-        self._update_position()
+            self.move_down()
+            self._update_position()
 
     def move_right(self):
         # Move the piece 1 position to the right and 1 down if possible
-        rightmost_col = 0
-        for position in self.position:
-            rightmost_col = max(rightmost_col, position % self.board_width)
+        if not self.is_static:
+            rightmost_col = max([p % self.board_width for p in self.position])
+            if rightmost_col + 1 < self.board_width:
+                self.col_offset += 1
 
-        if rightmost_col + 1 < self.board_width:
-            self.col_offset += 1
-
-        self.move_down()
-        self._update_position()
+            self.move_down()
+            self._update_position()
 
     def move_down(self):
         # Move the piece 1 position down if possible
-        bottommost_row = 0
-        for position in self.position:
-            bottommost_row = max(bottommost_row, position // self.board_width)
-
-        if bottommost_row + 1 < self.board_height:
-            self.row_offset += 1
-            self._update_position()
+        if not self.is_static:
+            bottommost_row = max(
+                [p // self.board_width for p in self.position]
+            )
+            if bottommost_row + 1 < self.board_height:
+                self.row_offset += 1
+                self._update_position()
 
     def _update_position(self):
         # Recalculate the position of the piece based on orientation and offset
@@ -124,6 +132,11 @@ class Piece:
             v += self.row_offset * self.board_width
             new_position[k] = v
         self.position = new_position
+
+        # Mark the piece as static if it reaches the floor of the board
+        bottommost_row = max([p // self.board_width for p in self.position])
+        if bottommost_row + 1 == self.board_height:
+            self.is_static = True
 
 
 if __name__ == '__main__':
@@ -155,6 +168,11 @@ if __name__ == '__main__':
         elif command == 'down':
             piece.move_down()
 
-        board.reset()
+        # Make the piece a part of the board if it reaches the floor
+        if piece.is_static:
+            board.add_static_piece(piece)
+
+        # Redraw the board and piece
+        board.redraw()
         board.add_piece(piece)
         print(board)
