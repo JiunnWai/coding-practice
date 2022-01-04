@@ -50,9 +50,10 @@ class Piece:
     J = ((5, 15, 25, 24), (15, 5, 4, 3), (5, 4, 14, 24), (4, 14, 15, 16))
     T = ((4, 14, 24, 15), (4, 13, 14, 15), (5, 15, 25, 14), (4, 5, 6, 15))
 
-    def __init__(self, piece: str, board_width: int):
+    def __init__(self, piece: str, board_width: int, board_height: int):
         self.piece = piece
         self.board_width = board_width
+        self.board_height = board_height
         self.position = self._get_initial_position()
         self.orientation = self.position
         self.row_offset = 0
@@ -76,21 +77,38 @@ class Piece:
         self._update_position()
 
     def move_left(self):
-        # Move the piece 1 position to the left, and also 1 down
-        self.col_offset -= 1
-        self.row_offset += 1
+        # Move the piece 1 position to the left and 1 down if possible
+        leftmost_col = self.board_width
+        for position in self.position:
+            leftmost_col = min(leftmost_col, position % self.board_width)
+
+        if leftmost_col > 0:
+            self.col_offset -= 1
+
+        self.move_down()
         self._update_position()
 
     def move_right(self):
-        # Move the piece 1 position to the right, and also 1 down
-        self.col_offset += 1
-        self.row_offset += 1
+        # Move the piece 1 position to the right and 1 down if possible
+        rightmost_col = 0
+        for position in self.position:
+            rightmost_col = max(rightmost_col, position % self.board_width)
+
+        if rightmost_col + 1 < self.board_width:
+            self.col_offset += 1
+
+        self.move_down()
         self._update_position()
 
     def move_down(self):
-        # Move the piece 1 position down
-        self.row_offset += 1
-        self._update_position()
+        # Move the piece 1 position down if possible
+        bottommost_row = 0
+        for position in self.position:
+            bottommost_row = max(bottommost_row, position // self.board_width)
+
+        if bottommost_row + 1 < self.board_height:
+            self.row_offset += 1
+            self._update_position()
 
     def _update_position(self):
         # Recalculate the position of the piece based on orientation and offset
@@ -115,7 +133,7 @@ if __name__ == '__main__':
     # Get board size
     width, height = (int(num) for num in input().split())
     board = Board(width=width, height=height)
-    piece = Piece(piece_letter, board.width)
+    piece = Piece(piece_letter, board.width, board.height)
 
     # Print the board, then the board with the piece
     print(board)
